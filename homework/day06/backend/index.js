@@ -7,7 +7,7 @@ import {options} from "./swagger/config.js"
 import cors from 'cors'
 import dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config() 
 
 const app = express();
 app.use(cors())
@@ -56,6 +56,7 @@ app.post('/tokens/phone', (req, res) => {
     // 3.핸드폰에 토큰 보내주기
         sendToken(req.body.phone, myToken)
         res.send('인증완료')
+    
     }
 })
 
