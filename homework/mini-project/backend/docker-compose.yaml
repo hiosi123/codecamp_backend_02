@@ -1,0 +1,23 @@
+version: "3.7"
+
+services: 
+  my-backend: 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./index.js:/myfolder/index.js
+      - ./email.js:/myfolder/email.js
+      - ./phone.js:/myfolder/phone.js
+      - ./cheerio.scraping.js:/myfolder/cheerio.scraping.js
+      - ./models/phone.model.js:/myfolder/models/phone.model.js
+      - ./models/starbucks.model.js:/myfolder/models/starbucks.model.js
+      - ./models/userSchema.model.js:/myfolder/models/userSchema.model.js
+    ports:
+      - 3001:3001
+  
+  my-database:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+
