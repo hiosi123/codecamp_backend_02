@@ -7,7 +7,8 @@ const userToken = new mongoose.Schema({
     prefer: String,
     pwd: String,
     phone: String,
-
+    og: Object 
+   
 })
 
 export const User = mongoose.model("User", userToken)

@@ -1,9 +1,35 @@
 /**
  * @openapi
- * /users:
- *   get:
- *      summary: 주문한 사람 정보 가져오기
- *      tags: [Get]
+ * /user:
+ *   post:
+ *      summary: 회원가입 하기
+ *      tags: [User]
+ *      requestBody:
+ *              required: true
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          properties:
+ *                              name:
+ *                                  type: string
+ *                                  required: true
+ *                                  example: 신홍석
+ *                              email:
+ *	                                type: string
+ *	                                example: hiosi@naver.com
+ *                              personal:
+ *                                  type: string
+ *                                  example: 999999-9999999
+ *                              prefer:
+ *                                  type: string
+ *                                  example: www.naver.com
+ *                              pwd:
+ *                                  type: string
+ *                                  example: 123123
+ *                              phone:
+ *                                  type: string
+ *                                  example: 01020311883
  *      responses:
  *          200:
  *              description: 성공
@@ -25,7 +51,7 @@
  *                                      example: 999999-9999999
  *                                  prefer:
  *                                      type: string
- *                                      example: www.google.com
+ *                                      example: https://www.naver.com/
  *                                  pwd:
  *                                      type: string
  *                                      example: 123123
@@ -51,4 +77,4 @@
  *                                                 
  *                                                  
  * 
- */                                
+ */                         

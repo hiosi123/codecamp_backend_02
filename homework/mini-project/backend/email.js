@@ -4,13 +4,13 @@ import {getToday} from './utils.js'
 export function checkAtEmpty(email) {
     if (email.includes('@') === false || email === ''){
         console.log('이메일 형식이 올바르지 않습니다')
-        return false
+        return 
     } else {
         return true
     }
 }
 
-export function getTemplate({name,personal, phoneNum, mySite, password, email}) {
+export function getTemplate({name,personal, phoneNum, prefer, password, email}) {
     return `
     <html>
         <body>
@@ -19,7 +19,7 @@ export function getTemplate({name,personal, phoneNum, mySite, password, email}) 
             <div>이름: ${name}<div/>
             <div>주민등록번호: ${personal}<div/>
             <div>전화번호: ${phoneNum} <div/>
-            <div>좋아하는 사이트: ${mySite} <div/>
+            <div>좋아하는 사이트: ${prefer} <div/>
             <div>이메일: ${email}</div>
             <div>패스워드: ${password}</div>
             <div>오늘 날짜: ${getToday()}<div/>
@@ -50,7 +50,7 @@ export async function sendEmail(email,template) {
         }   
     })
 
-    console.log(result3)
+
     console.log('전송 끝!!!')
 
 

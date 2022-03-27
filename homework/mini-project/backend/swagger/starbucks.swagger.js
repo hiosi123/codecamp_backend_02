@@ -3,7 +3,7 @@
  * /starbucks:
  *   get:
  *      summary: 커피메뉴 리스트 가져오기
- *      tags: [Board]
+ *      tags: [Get]
  *      responses:
  *          200:
  *              description: 성공
@@ -17,7 +17,7 @@
  *                                  name:
  *	                                    type: string
  *	                                    example: 아메리카노
- *                                  kcal:
- *	                                    type: int
- *	                                    example: 5
+ *                                  img:
+ *	                                    type: string
+ *	                                    example: https://s.pstatic.net/static/www/mobile/edit/2016/0705/mobile_21285241...
  */                                

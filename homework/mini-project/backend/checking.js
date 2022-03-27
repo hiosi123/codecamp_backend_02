@@ -20,11 +20,8 @@ export function checkLength(number){
 export function hideNumber(number) {
     let count=6
     let arr = number.split('');
-    arr = arr.splice(arr.length-count, arr.length-1, ('*').repeat(count));
+    arr.splice(arr.length-count, arr.length-1, ('*').repeat(count));
     let answer = arr.join('');
-
-    console.log(answer)
-    console.log('------')
+    return(answer)
+    
 }
-
-hideNumber("911111-1111111")

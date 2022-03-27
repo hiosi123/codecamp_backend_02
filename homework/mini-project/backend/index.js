@@ -8,9 +8,11 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 import { Phone } from './models/phone.model.js';
-import { Starbucks } from './models/starbucks.model.js';
+import {Starbucks} from "./models/starbucks.model.js"
 import { User } from './models/userSchema.model.js'
 import { createBoardAPI } from './cheerio.scraping.js'
+import {checkDash, checkLength, hideNumber} from "./checking.js"
+
 
 
 dotenv.config() 
@@ -23,76 +25,127 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(options)));
 
 const port = 3001
 
+
 app.post('/user', async(req, res) => {
-    const user = new User({
-        ...req.body
-    })
-    const phonenum = await Phone.findOne({ phone:req.body.phone });
+    
+    const NumberFromFront = req.body.phone
+    const PersonalFromFront = req.body.personal
+    const EmailFromFront = req.body.email
+    let SiteFromFront = req.body.prefer
 
-    if(req.body.phone === phonenum.phone ) {
-
-        if(phonenum.isAuth === false){
-        res.status(422)
-        res.send("에러!! 핸드폰 번호가 인증되지 않았습니다.")
-        return
-        }else {
-            let favorites = {"hello":"112"}
-            createBoardAPI(req.body.prefer)
-            await User.updateOne({phone:req.body.phone}, {prefer: favorites})
-            res.send(user)
+    
+    const phonenum = await Phone.findOne({ phone: NumberFromFront });
+    const user = await User.findOne({phone:NumberFromFront})
+    
+    //클라이언트가 입력한 번호가 인증 확인 과정에서 들어온 데이터 서버에 있는 번호와 일치하는지
+    if(phonenum) {
+        //클라이언트가 입력한 번호가 이미 유저로 등록 되어 있는지 여부 확인
+        if(user){
+            res.status(422)
+            res.send("이미 존재하는 유저입니다")
+            return
         }
+
+        if(phonenum.phone === NumberFromFront && phonenum.isAuth=== true){
+
+            //좋아하는 사이트 주소가 올바른지
+            if(SiteFromFront.startsWith("www")) {
+                SiteFromFront = "https://" + SiteFromFront + "/"
+            
+            } else {
+                res.status(422)
+                res.send("예시: www.google.com 형태로 적어주세요")
+                console.log("예시: www.google.com 형태로 적어주세요")
+                return 
+            }
+            const website = await createBoardAPI(SiteFromFront)
+            req.body.og = website
+            
+            if(!checkDash(PersonalFromFront) || !checkLength(PersonalFromFront)){
+                res.send('주민번호 형식을 확인해주세요')
+                return
+            }
+            const personalHide = hideNumber(PersonalFromFront)
+            req.body.personal = personalHide
+            
+            
+             //1. 이메일이 정상인지 확인(1- 존재여부, 2- 골뱅이가 포함되어 있어야 한다)
+            if (checkAtEmpty(EmailFromFront)) {
+          
+              //2. 가입환영 템플릿 만들기
+              const template = getTemplate(req.body)
+          
+              //3. 이메일에 가입환영 템플릿 전송하기
+              await sendEmail(EmailFromFront, template)
+ 
+            } else {
+                res.send('이메일 형식이 올바르지 않습니다')
+            
+                return
+            }
+
+            const user = new User({
+                ...req.body
+            })
+            
+            await user.save()
+
+            const id = await User.findOne({phone:NumberFromFront})
+
+            
+            
+            res.send(id._id)
+            
+            return
+
+        } else{
+            res.status(422)
+            res.send("에러!! 핸드폰 번호가 인증되지 않았습니다.")
+            return
+        }
+
+    } else {
+        res.status(422)
+        res.send("핸드폰 인증 과정을 먼저 진행해 주세요")
+        return
     }
-    
-    
-    
 })
 
-
 app.get('/users', async(req, res) => {
-    // const user = [
-    //     {email: "hiosi@naver.com",name:"Simon",phone: "01020311883",personal: "912222-1111111",prefer: "https://google.com"},
-    //     {email: "hiosi1@naver.com",name:"Selly",phone: "01010311883",personal: "912222-1111112",prefer: "https://google.com"},
-    //     {email: "hiosi2@naver.com",name:"Rock",phone: "01023311883",personal: "912222-1111113",prefer: "https://google.com"},
-    //     {email: "hiosi3@naver.com",name:"Paper",phone: "01040311883",personal: "912222-1111114",prefer: "https://google.com"},
-    //     {email: "hiosi4@naver.com",name:"Scissors",phone: "01520311883",personal: "912222-1112111",prefer: "https://google.com"},
-    // ]
+
     const user = await User.find()
 
 
     res.send(user)
 })
 
-
-
 app.get('/starbucks', async (req,res) => {
-    // const coffee = [
-    //     {name: "americano", kcal: 5},
-    //     {name: "green tea latte", kcal: 76},
-    //     {name: "latte", kcal: 40},
-    //     {name: "tripple shot americano", kcal: 10},
-    //     {name: "frappochino", kcal: 300},
-    //     {name: "monster coffee", kcal: 10000},
-    //     {name: "icecream", kcal: 200},
-    //     {name: "tea", kcal: 5},
-    //     {name: "americano1", kcal: 10},
-    //     {name: "americano2", kcal: 10},
-      
-    // ]
-    const coffee = await Starbucks.find()
+    const coffeesServer = await Starbucks.find()
+    // const coffee = await Starbucks.find()
 
-    res.send(coffee)
+    res.send(coffeesServer)
 })
 
 app.post('/tokens/phone', async (req, res) => {
     // 1.핸드폰 번호를 제대로 입력했나?
+    //핸드폰 번호를 밖으로 담아주기
+    const user = await User.findOne({phone:req.body.phone})
+
+    if(user){
+        res.status(422)
+        res.send("이미 존재하는 유저입니다")
+        return
+    }
+
     const isValid = checkValidationPhone(req.body.phone)
     let myToken
     if(isValid) {
         // 2. 핸드폰 토큰 6자리 만들기
         myToken = getToken()
-
-        //sendToken(req.body.phone, myToken)
-        res.send('인증완료')
+        
+        sendToken(req.body.phone, myToken)
+        res.send(myToken)
+       
     }
 
     const phonenum = await Phone.findOne({ phone:req.body.phone });
@@ -104,6 +157,8 @@ app.post('/tokens/phone', async (req, res) => {
             isAuth: false
         })
         await phoneToken.save()
+
+        
     } else {
         await Phone.updateOne({phone:req.body.phone}, {token:myToken})
     }
@@ -112,33 +167,27 @@ app.post('/tokens/phone', async (req, res) => {
 app.patch('/tokens/phone', async (req, res) => {
     
     const phonenum = await Phone.findOne({ phone:req.body.phone });
-    
+    if(phonenum === null){
+        res.status(422)
+        res.send("post/tokens/phone 를 먼저 실행해 주세요")
+        return
+    }
+
     if(req.body.phone !== phonenum.phone || req.body.token !== phonenum.token) {
-        res.send("false")
+        res.status(422)
+        res.send("인증 실패")
+        console.log("인증 실패")
+        return
     } else {
-        await Phone.updateOne({phone:req.body.phone}, {isAuth:true})
-        res.send("true")
+        await Phone.updateOne({phone:req.body.phone }, {isAuth:true})
+        res.send("인증 성공")
+        console.log("인증 성공")
     }
         
 })
 
-app.post("/users",(req, res) => {
-    const myuser = req.body.user
-    console.log(myuser)
-     //1. 이메일이 정상인지 확인(1- 존재여부, 2- 골뱅이가 포함되어 있어야 한다)
-     if (checkAtEmpty(myuser.email)) {
-  
-      //2. 가입환영 템플릿 만들기
-      const template = getTemplate(myuser)
-  
-      //3. 이메일에 가입환영 템플릿 전송하기
-      sendEmail(myuser.email, template)
-    }
-    res.send('전송완료')
-  })
 
 
 mongoose.connect("mongodb://my-database:27017/myDocument")
-
 
 app.listen(port)
